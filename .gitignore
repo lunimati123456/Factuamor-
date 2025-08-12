@@ -2,6 +2,7 @@
 .venv/
 
 # Archivos de base de datos
+db.sqlite3
 
 # Archivos de caché de Python
 __pycache__/
