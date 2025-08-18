@@ -16,10 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from productos.views import index
+import os
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name='index'),
     path('productos/', include('productos.urls')),
 ]
+
+# Configuración para servir archivos de medios y estáticos en desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'static'))
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
