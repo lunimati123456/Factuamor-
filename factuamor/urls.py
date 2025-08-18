@@ -24,7 +24,7 @@ import os
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name='index'),
-    path('productos/', include('productos.urls')),
+    path('productos/', include('productos.urls', namespace='productos')),
 ]
 
 # Configuración para servir archivos de medios y estáticos en desarrollo

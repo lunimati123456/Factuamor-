@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}FactuAmor{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/global_styles.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header>
+        <h1>FactuAmor</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'index' %}">Inicio</a></li>
+                                <li><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+                <li><a href="{% url 'admin:index' %}">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 FactuAmor. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>
