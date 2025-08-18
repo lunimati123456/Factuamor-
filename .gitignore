@@ -13,3 +13,15 @@ __pycache__/
 
 # Archivos de configuración local
 .env
+
+# Archivos de media de usuarios
+media/
+
+# Archivos temporales
+*.swp
+*.swo
+*.swx
+
+# Archivos de logs
+*.log
+*.
