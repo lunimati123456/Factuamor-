@@ -26,6 +26,9 @@
                     <p class="description">{{ producto.descripcion }}</p>
                     <p class="price">{{ producto.precio|default:0 }} COP</p>
                     <p class="stock">Stock: {{ producto.stock }}</p>
+                    <div class="product-actions">
+                        <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary">Editar</a>
+                    </div>
                 </div>
             </div>
             {% endfor %}

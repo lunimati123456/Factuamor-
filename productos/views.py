@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 from .models import Producto
 
@@ -15,6 +15,13 @@ class ProductoListView(ListView):
 
 # Vista para crear un nuevo producto
 class ProductoCreateView(CreateView):
+    model = Producto
+    fields = ['nombre', 'descripcion', 'precio', 'stock', 'imagen']
+    template_name = 'productos/producto_form.html'
+    success_url = reverse_lazy('productos:lista_productos')
+    
+# Vista para editar un producto existente
+class ProductoUpdateView(UpdateView):
     model = Producto
     fields = ['nombre', 'descripcion', 'precio', 'stock', 'imagen']
     template_name = 'productos/producto_form.html'
