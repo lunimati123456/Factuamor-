@@ -28,6 +28,7 @@
                     <p class="stock">Stock: {{ producto.stock }}</p>
                     <div class="product-actions">
                         <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary">Editar</a>
+                        <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger">Eliminar</a>
                     </div>
                 </div>
             </div>

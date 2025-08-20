@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Producto{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card p-4">
+        <div class="text-center">
+            <h2 class="mb-4">¿Estás seguro de que quieres eliminar el producto "{{ object.nombre }}"?</h2>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger me-2">Sí, estoy seguro</button>
+                <a href="{% url 'productos:lista_productos' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

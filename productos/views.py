@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from .models import Producto
 
@@ -25,4 +25,10 @@ class ProductoUpdateView(UpdateView):
     model = Producto
     fields = ['nombre', 'descripcion', 'precio', 'stock', 'imagen']
     template_name = 'productos/producto_form.html'
+    success_url = reverse_lazy('productos:lista_productos')
+
+# Vista para eliminar un producto
+class ProductoDeleteView(DeleteView):
+    model = Producto
+    template_name = 'productos/producto_confirm_delete.html'
     success_url = reverse_lazy('productos:lista_productos')
