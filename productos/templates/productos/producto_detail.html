@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ producto.nombre }} - Detalles{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="product-detail-container my-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card p-3 text-center">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" class="img-fluid" alt="{{ producto.nombre }}">
+                {% else %}
+                    <img src="{% static 'productos/images/no-image.png' %}" class="img-fluid" alt="Imagen no disponible">
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="product-info">
+                <h1>{{ producto.nombre }}</h1>
+                <p class="text-muted">{{ producto.descripcion }}</p>
+                <h3 class="price my-3">{{ producto.precio|default:0 }} COP</h3>
+                <p class="stock">Stock disponible: {{ producto.stock }}</p>
+                
+                <div class="mt-4">
+                    <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary me-2">Editar</a>
+                    <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger me-2">Eliminar</a>
+                    <a href="{% url 'productos:lista_productos' %}" class="btn btn-secondary">Volver a la lista</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

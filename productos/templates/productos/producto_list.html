@@ -18,22 +18,24 @@
         {% if productos %}
             {% for producto in productos %}
             <div class="product-card {% if producto.stock <= 5 %}low-stock{% endif %}">
-                <div class="image-container">
-                    {% if producto.imagen %}
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-                    {% else %}
-                        <img src="{% static 'productos/images/no-image.png' %}" alt="Imagen no disponible">
-                    {% endif %}
-                </div>
-                <div class="product-info">
-                    <h3>{{ producto.nombre }}</h3>
-                    <p class="description">{{ producto.descripcion }}</p>
-                    <p class="price">{{ producto.precio|default:0 }} COP</p>
-                    <p class="stock">Stock: {{ producto.stock }}</p>
-                    <div class="product-actions">
-                        <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary">Editar</a>
-                        <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger">Eliminar</a>
+                <a href="{% url 'productos:detalle_producto' producto.pk %}" class="product-link">
+                    <div class="image-container">
+                        {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                        {% else %}
+                            <img src="{% static 'productos/images/no-image.png' %}" alt="Imagen no disponible">
+                        {% endif %}
                     </div>
+                    <div class="product-info">
+                        <h3>{{ producto.nombre }}</h3>
+                        <p class="description">{{ producto.descripcion }}</p>
+                        <p class="price">{{ producto.precio|default:0 }} COP</p>
+                        <p class="stock">Stock: {{ producto.stock }}</p>
+                    </div>
+                </a>
+                <div class="product-actions mt-3">
+                    <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary">Editar</a>
+                    <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger">Eliminar</a>
                 </div>
             </div>
             {% endfor %}
