@@ -9,7 +9,11 @@
 
 {% block content %}
 <div class="product-list-container">
-    <h2>Lista de Productos</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Lista de Productos</h2>
+        <a href="{% url 'productos:crear_producto' %}" class="btn btn-success">Crear Producto</a>
+    </div>
+
     <div class="product-grid">
         {% if productos %}
             {% for producto in productos %}
