@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Mis aplicaciones
     'productos',
     'clientes',
+    'factura',
 ]
 
 MIDDLEWARE = [
