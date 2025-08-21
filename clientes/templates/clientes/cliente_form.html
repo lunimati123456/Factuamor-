@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Crear Cliente{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card p-4">
+        <h2 class="card-title text-center mb-4">Crear Nuevo Cliente</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-flex justify-content-center mt-3">
+                <button type="submit" class="btn btn-success me-2">Guardar</button>
+                <a href="{% url 'clientes:lista_clientes' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
