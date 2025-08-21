@@ -17,21 +17,29 @@
                 <th>Cédula</th>
                 <th>Correo</th>
                 <th>Teléfono</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% if clientes %}
                 {% for cliente in clientes %}
                 <tr>
-                    <td>{{ cliente.nombre }} {{ cliente.apellido }}</td>
+                    <td>
+                        <a href="{% url 'clientes:detalle_cliente' cliente.pk %}">
+                            {{ cliente.nombre }} {{ cliente.apellido }}
+                        </a>
+                    </td>
                     <td>{{ cliente.cedula }}</td>
                     <td>{{ cliente.correo }}</td>
                     <td>{{ cliente.telefono|default:"N/A" }}</td>
+                    <td>
+                        <a href="{% url 'clientes:editar_cliente' cliente.pk %}" class="btn btn-sm btn-primary">Editar</a>
+                    </td>
                 </tr>
                 {% endfor %}
             {% else %}
             <tr>
-                <td colspan="4" class="text-center">No hay clientes registrados.</td>
+                <td colspan="5" class="text-center">No hay clientes registrados.</td>
             </tr>
             {% endif %}
         </tbody>

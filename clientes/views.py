@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from .models import Cliente
 
@@ -15,3 +15,13 @@ class ClienteCreateView(CreateView):
     template_name = 'clientes/cliente_form.html'
     success_url = reverse_lazy('clientes:lista_clientes')
 
+class ClienteDetailView(DetailView):
+    model = Cliente
+    template_name = 'clientes/cliente_detail.html'
+    context_object_name = 'cliente'
+
+class ClienteUpdateView(UpdateView):
+    model = Cliente
+    fields = ['nombre', 'apellido', 'cedula', 'correo', 'telefono']
+    template_name = 'clientes/cliente_form.html'
+    success_url = reverse_lazy('clientes:lista_clientes')
