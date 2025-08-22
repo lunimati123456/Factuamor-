@@ -25,8 +25,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name='index'),
     path('productos/', include('productos.urls', namespace='productos')),
-    path('clientes/', include('clientes.urls')),
-]
+    path('clientes/', include('clientes.urls', namespace='clientes')),
+    path('factura/', include('factura.urls', namespace='factura')),]
 
 # Configuración para servir archivos de medios y estáticos en desarrollo
 if settings.DEBUG:
