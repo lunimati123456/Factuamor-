@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views import View
+from django.views.generic import ListView
 from .forms import FacturaForm
 from .models import DetalleFactura, Producto, Factura
+from decimal import Decimal
 
 class FacturaCreateView(View):
     def get(self, request, *args, **kwargs):
@@ -19,6 +21,9 @@ class FacturaCreateView(View):
             factura = form.save(commit=False)
             factura.save()
             
+            # Inicializar el total de la factura
+            total_factura = Decimal(0)
+            
             # Lógica para guardar los detalles de la factura
             productos_seleccionados = request.POST.getlist('producto')
             cantidades = request.POST.getlist('cantidad')
@@ -27,16 +32,24 @@ class FacturaCreateView(View):
                 if producto_id and cantidad:
                     producto = Producto.objects.get(pk=producto_id)
                     cantidad = int(cantidad)
+                    subtotal_item = producto.precio * cantidad
                     
                     DetalleFactura.objects.create(
                         factura=factura,
                         producto=producto,
                         cantidad=cantidad,
                         precio_unitario=producto.precio,
-                        subtotal=producto.precio * cantidad
+                        subtotal=subtotal_item
                     )
+                    
+                    # Sumar al total de la factura
+                    total_factura += subtotal_item
             
-            return redirect(reverse('factura:lista_facturas'))
+            # Actualizar el total de la factura y guardarla
+            factura.total = total_factura
+            factura.save()
+            
+            return redirect(reverse_lazy('factura:lista_facturas'))
         
         # Si el formulario no es válido, renderiza de nuevo la página con los errores
         productos = Producto.objects.all()
@@ -44,3 +57,10 @@ class FacturaCreateView(View):
             'form': form,
             'productos': productos
         })
+        
+# Vista para la lista de facturas
+class FacturaListView(ListView):
+    model = Factura
+    template_name = 'factura/factura_list.html'
+    context_object_name = 'facturas'
+    ordering = ['-fecha']
