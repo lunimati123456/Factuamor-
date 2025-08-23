@@ -21,10 +21,7 @@ class FacturaCreateView(View):
             factura = form.save(commit=False)
             factura.save()
             
-            # Inicializar el total de la factura
-            total_factura = Decimal(0)
-            
-            # Lógica para guardar los detalles de la factura
+            # Guardar los detalles de la factura
             productos_seleccionados = request.POST.getlist('producto')
             cantidades = request.POST.getlist('cantidad')
             
@@ -32,22 +29,12 @@ class FacturaCreateView(View):
                 if producto_id and cantidad:
                     producto = Producto.objects.get(pk=producto_id)
                     cantidad = int(cantidad)
-                    subtotal_item = producto.precio * cantidad
                     
                     DetalleFactura.objects.create(
                         factura=factura,
                         producto=producto,
-                        cantidad=cantidad,
-                        precio_unitario=producto.precio,
-                        subtotal=subtotal_item
+                        cantidad=cantidad
                     )
-                    
-                    # Sumar al total de la factura
-                    total_factura += subtotal_item
-            
-            # Actualizar el total de la factura y guardarla
-            factura.total = total_factura
-            factura.save()
             
             return redirect(reverse_lazy('factura:lista_facturas'))
         
@@ -57,8 +44,8 @@ class FacturaCreateView(View):
             'form': form,
             'productos': productos
         })
-        
-# Vista para la lista de facturas
+
+
 class FacturaListView(ListView):
     model = Factura
     template_name = 'factura/factura_list.html'

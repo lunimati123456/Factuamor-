@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load filtros_moneda %}
 
 {% block title %}Lista de Facturas{% endblock %}
 
@@ -27,7 +28,7 @@
                     <td>{{ factura.pk }}</td>
                     <td>{{ factura.cliente.nombre }} {{ factura.cliente.apellido }}</td>
                     <td>{{ factura.fecha|date:"d M Y" }}</td>
-                    <td>{{ factura.total|default:"0.00" }}</td>
+                    <td>{{ factura.total|moneda_cop }}</td>
                     <td>
                         <a href="#" class="btn btn-sm btn-info">Ver Detalles</a>
                     </td>
