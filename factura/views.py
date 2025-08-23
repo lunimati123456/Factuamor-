@@ -2,14 +2,16 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView
+from django.db import transaction
+from django.core.exceptions import ValidationError
 from .forms import FacturaForm
 from .models import DetalleFactura, Producto, Factura
-from decimal import Decimal
+from collections import defaultdict
 
 class FacturaCreateView(View):
     def get(self, request, *args, **kwargs):
         form = FacturaForm()
-        productos = Producto.objects.all()
+        productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
         return render(request, 'factura/factura_form.html', {
             'form': form,
             'productos': productos
@@ -17,37 +19,55 @@ class FacturaCreateView(View):
 
     def post(self, request, *args, **kwargs):
         form = FacturaForm(request.POST)
-        if form.is_valid():
-            factura = form.save(commit=False)
-            factura.save()
-            
-            # Guardar los detalles de la factura
-            productos_seleccionados = request.POST.getlist('producto')
-            cantidades = request.POST.getlist('cantidad')
-            
-            for producto_id, cantidad in zip(productos_seleccionados, cantidades):
-                if producto_id and cantidad:
+        
+        if not form.is_valid():
+            productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
+            return render(request, 'factura/factura_form.html', {
+                'form': form,
+                'productos': productos
+            })
+        
+        try:
+            with transaction.atomic():
+                factura = form.save()
+                
+                # Agrupar cantidades por producto
+                productos_seleccionados = request.POST.getlist('producto')
+                cantidades = request.POST.getlist('cantidad')
+                
+                productos_agrupados = defaultdict(int)
+                for producto_id, cantidad in zip(productos_seleccionados, cantidades):
+                    if producto_id and cantidad:
+                        productos_agrupados[int(producto_id)] += int(cantidad)
+                
+                for producto_id, cantidad in productos_agrupados.items():
+                    if cantidad <= 0:
+                        raise ValidationError("La cantidad de un producto debe ser mayor a 0.")
+                    
                     producto = Producto.objects.get(pk=producto_id)
-                    cantidad = int(cantidad)
                     
                     DetalleFactura.objects.create(
                         factura=factura,
                         producto=producto,
                         cantidad=cantidad
                     )
-            
-            return redirect(reverse_lazy('factura:lista_facturas'))
+                
+                return redirect(reverse_lazy('factura:lista_facturas'))
         
-        # Si el formulario no es válido, renderiza de nuevo la página con los errores
-        productos = Producto.objects.all()
+        except ValidationError as e:
+            form.add_error(None, e)
+        except Exception as e:
+            form.add_error(None, f"Error inesperado: {str(e)}")
+        
+        productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
         return render(request, 'factura/factura_form.html', {
             'form': form,
             'productos': productos
         })
-
 
 class FacturaListView(ListView):
     model = Factura
     template_name = 'factura/factura_list.html'
     context_object_name = 'facturas'
     ordering = ['-fecha']
+    paginate_by = 10
