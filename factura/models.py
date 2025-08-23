@@ -44,7 +44,15 @@ class DetalleFactura(models.Model):
         unique_together = ("factura", "producto")
     
     def clean(self):
-        """Validación de stock antes de guardar."""
+        """Validación de stock y unicidad antes de guardar."""
+        
+        # Validación de unicidad manual para asegurar que no se repita el producto en la misma factura.
+        # Esto es necesario porque algunos backends de base de datos no aplican la restricción de inmediato.
+        if not self.pk:
+            if DetalleFactura.objects.filter(factura=self.factura, producto=self.producto).exists():
+                raise ValidationError("Este producto ya está en la factura.")
+
+        # Obtener stock actual del producto (evita problemas con caché)
         stock_actual = Producto.objects.get(pk=self.producto.pk).stock
         
         if not self.pk and self.cantidad > stock_actual:
