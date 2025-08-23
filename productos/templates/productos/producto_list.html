@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load filtros_moneda %}
 
 {% block title %}Lista de Productos - FactuAmor{% endblock %}
 
@@ -29,7 +30,7 @@
                     <div class="product-info">
                         <h3>{{ producto.nombre }}</h3>
                         <p class="description">{{ producto.descripcion }}</p>
-                        <p class="price">{{ producto.precio|default:0 }} COP</p>
+                        <p class="price">{{ producto.precio|moneda_cop }}</p>
                         <p class="stock">Stock: {{ producto.stock }}</p>
                     </div>
                 </a>

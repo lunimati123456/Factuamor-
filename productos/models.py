@@ -1,9 +1,15 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=200, verbose_name="Nombre del Producto")
     descripcion = models.TextField(verbose_name="Descripción del Producto", blank=True, null=True)
-    precio = models.IntegerField(verbose_name='Precio (COP)')
+    precio = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        validators=[MinValueValidator(1)],
+        verbose_name='Precio (COP)'
+    )
     stock = models.PositiveIntegerField(verbose_name="Stock disponible", default=0)
     imagen = models.ImageField(upload_to='productos/', verbose_name="Imagen del Producto", blank=True, null=True)
     activo = models.BooleanField(default=True)
