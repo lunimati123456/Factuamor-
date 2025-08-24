@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .forms import FacturaForm
@@ -71,3 +71,8 @@ class FacturaListView(ListView):
     context_object_name = 'facturas'
     ordering = ['-fecha']
     paginate_by = 10
+    
+class FacturaDetailView(DetailView):
+    model = Factura
+    template_name = 'factura/factura_detail.html'
+    context_object_name = 'factura'

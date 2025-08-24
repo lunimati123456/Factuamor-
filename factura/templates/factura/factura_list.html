@@ -30,7 +30,7 @@
                     <td>{{ factura.fecha|date:"d M Y" }}</td>
                     <td>{{ factura.total|moneda_cop }}</td>
                     <td>
-                        <a href="#" class="btn btn-sm btn-info">Ver Detalles</a>
+                        <a href="{% url 'factura:detalle_factura' factura.pk %}" class="btn btn-sm btn-info">Ver Detalles</a>
                     </td>
                 </tr>
                 {% endfor %}
