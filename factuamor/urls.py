@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from productos.views import index
+from django.contrib.auth import views as auth_views
 import os
 
 urlpatterns = [
@@ -26,7 +27,10 @@ urlpatterns = [
     path('', index, name='index'),
     path('productos/', include('productos.urls', namespace='productos')),
     path('clientes/', include('clientes.urls', namespace='clientes')),
-    path('factura/', include('factura.urls', namespace='factura')),]
+    path('factura/', include('factura.urls', namespace='factura')),
+    path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
+    ]
 
 # Configuración para servir archivos de medios y estáticos en desarrollo
 if settings.DEBUG:
