@@ -7,8 +7,10 @@ from django.core.exceptions import ValidationError
 from .forms import FacturaForm
 from .models import DetalleFactura, Producto, Factura
 from collections import defaultdict
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
-class FacturaCreateView(View):
+class FacturaCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'factura.add_factura'
     def get(self, request, *args, **kwargs):
         form = FacturaForm()
         productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
@@ -65,14 +67,14 @@ class FacturaCreateView(View):
             'productos': productos
         })
 
-class FacturaListView(ListView):
+class FacturaListView(LoginRequiredMixin, ListView):
     model = Factura
     template_name = 'factura/factura_list.html'
     context_object_name = 'facturas'
     ordering = ['-fecha']
     paginate_by = 10
     
-class FacturaDetailView(DetailView):
+class FacturaDetailView(LoginRequiredMixin, DetailView):
     model = Factura
     template_name = 'factura/factura_detail.html'
     context_object_name = 'factura'
