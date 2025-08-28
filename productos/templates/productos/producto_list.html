@@ -2,47 +2,46 @@
 {% load static %}
 {% load filtros_moneda %}
 
-{% block title %}Lista de Productos - FactuAmor{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
-{% endblock %}
+{% block title %}Gestión de Productos{% endblock %}
 
 {% block content %}
-<div class="product-list-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Lista de Productos</h2>
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Gestión de Productos</h2>
+        {% if perms.productos.add_producto %}
         <a href="{% url 'productos:crear_producto' %}" class="btn btn-success">Crear Producto</a>
-    </div>
-
-    <div class="product-grid">
-        {% if productos %}
-            {% for producto in productos %}
-            <div class="product-card {% if producto.stock <= 5 %}low-stock{% endif %}">
-                <a href="{% url 'productos:detalle_producto' producto.pk %}" class="product-link">
-                    <div class="image-container">
-                        {% if producto.imagen %}
-                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-                        {% else %}
-                            <img src="{% static 'productos/images/no-image.png' %}" alt="Imagen no disponible">
-                        {% endif %}
-                    </div>
-                    <div class="product-info">
-                        <h3>{{ producto.nombre }}</h3>
-                        <p class="description">{{ producto.descripcion }}</p>
-                        <p class="price">{{ producto.precio|moneda_cop }}</p>
-                        <p class="stock">Stock: {{ producto.stock }}</p>
-                    </div>
-                </a>
-                <div class="product-actions mt-3">
-                    <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary">Editar</a>
-                    <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger">Eliminar</a>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p>No hay productos disponibles.</p>
         {% endif %}
     </div>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td>{{ producto.nombre }}</td>
+                <td>{{ producto.precio|moneda_cop }}</td>
+                <td>{{ producto.stock }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'productos:detalle_producto' producto.pk %}" class="btn btn-sm btn-info">Detalles</a>
+                        {% if perms.productos.change_producto %}
+                        <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-sm btn-warning">Editar</a>
+                        {% endif %}
+                        {% if perms.productos.delete_producto %}
+                        <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

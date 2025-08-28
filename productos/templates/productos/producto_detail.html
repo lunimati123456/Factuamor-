@@ -2,35 +2,38 @@
 {% load static %}
 {% load filtros_moneda %}
 
-{% block title %}{{ producto.nombre }} - Detalles{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
-{% endblock %}
+{% block title %}Detalles de Producto{% endblock %}
 
 {% block content %}
-<div class="product-detail-container my-4">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card p-3 text-center">
-                {% if producto.imagen %}
-                    <img src="{{ producto.imagen.url }}" class="img-fluid" alt="{{ producto.nombre }}">
-                {% else %}
-                    <img src="{% static 'productos/images/no-image.png' %}" class="img-fluid" alt="Imagen no disponible">
-                {% endif %}
-            </div>
+<div class="container my-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Detalles del Producto</h2>
         </div>
-        <div class="col-md-6">
-            <div class="product-info">
-                <h1>{{ producto.nombre }}</h1>
-                <p class="text-muted">{{ producto.descripcion }}</p>
-                <h3 class="price my-3">{{ producto.precio|moneda_cop }}</h3>
-                <p class="stock">Stock disponible: {{ producto.stock }}</p>
-                
-                <div class="mt-4">
-                    <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-primary me-2">Editar</a>
-                    <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger me-2">Eliminar</a>
-                    <a href="{% url 'productos:lista_productos' %}" class="btn btn-secondary">Volver a la lista</a>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-fluid rounded shadow-sm">
+                    {% else %}
+                    <img src="{% static 'images/placeholder_product.png' %}" alt="Imagen no disponible" class="img-fluid rounded shadow-sm">
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <h4>{{ producto.nombre }}</h4>
+                    <p class="lead">{{ producto.descripcion }}</p>
+                    <p class="fs-4 fw-bold text-success">{{ producto.precio|moneda_cop }}</p>
+                    <p><strong>Stock Disponible:</strong> {{ producto.stock }}</p>
+                    <hr>
+                    <div class="d-flex justify-content-start">
+                        <a href="{% url 'productos:catalogo_productos' %}" class="btn btn-secondary me-2">Volver a la lista</a>
+                        {% if perms.productos.change_producto %}
+                        <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-warning me-2">Editar</a>
+                        {% endif %}
+                        {% if perms.productos.delete_producto %}
+                        <a href="{% url 'productos:eliminar_producto' producto.pk %}" class="btn btn-danger">Eliminar</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
