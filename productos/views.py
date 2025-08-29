@@ -4,11 +4,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .models import Producto
 
-# La vista de inicio
-def index(request):
-    return render(request, 'index.html')
-
-# Vista de catálogo público (sin autenticación ni permisos)
+# Vista de catálogo público, página de inicio del sitio (sin autenticación ni permisos)
 class CatalogoListView(ListView):
     model = Producto
     template_name = 'productos/catalogo_list.html'
