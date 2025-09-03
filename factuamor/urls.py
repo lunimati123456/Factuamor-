@@ -27,9 +27,12 @@ urlpatterns = [
     path('', include('productos.urls', namespace='productos')),
     path('clientes/', include('clientes.urls', namespace='clientes')),
     path('factura/', include('factura.urls', namespace='factura')),
+    
+    # URLs para la gestión de usuarios y autenticación
+    path('cuentas/', include('usuarios.urls', namespace='usuarios')),
     path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
-    ]
+]
 
 # Configuración para servir archivos de medios y estáticos en desarrollo
 if settings.DEBUG:
