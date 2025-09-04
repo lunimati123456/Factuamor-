@@ -34,6 +34,10 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
 ]
 
+# Configuración de los manejadores de errores personalizados
+handler404 = 'django.views.defaults.page_not_found'
+handler403 = 'django.views.defaults.permission_denied'
+
 # Configuración para servir archivos de medios y estáticos en desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'static'))

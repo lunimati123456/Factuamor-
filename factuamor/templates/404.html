@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Página no encontrada{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <h1 class="display-1 text-danger">404</h1>
+            <h2 class="display-4">Página no encontrada</h2>
+            <p class="lead">Lo sentimos, la página que estás buscando no existe. Es posible que la dirección sea incorrecta o que la página haya sido movida.</p>
+            <a href="{% url 'productos:catalogo_productos' %}" class="btn btn-primary mt-3">Volver a la página de inicio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
