@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, DeleteView
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .forms import FacturaForm
@@ -78,3 +78,9 @@ class FacturaDetailView(LoginRequiredMixin, DetailView):
     model = Factura
     template_name = 'factura/factura_detail.html'
     context_object_name = 'factura'
+
+class FacturaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Factura
+    template_name = 'factura/factura_confirm_delete.html'
+    success_url = reverse_lazy('factura:lista_facturas')
+    permission_required = 'factura.delete_factura'
