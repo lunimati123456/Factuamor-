@@ -50,6 +50,9 @@
             </table>
             <div class="d-flex justify-content-end mt-4">
                 <a href="{% url 'factura:lista_facturas' %}" class="btn btn-secondary me-2">Volver al listado</a>
+                {% if perms.factura.change_factura %}
+                <a href="{% url 'factura:editar_factura' factura.pk %}" class="btn btn-warning me-2">Editar Factura</a>
+                {% endif %}
                 {% if perms.factura.delete_factura %}
                 <a href="{% url 'factura:eliminar_factura' factura.pk %}" class="btn btn-danger">Eliminar Factura</a>
                 {% endif %}

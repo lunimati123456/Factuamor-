@@ -1,12 +1,25 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load filtros_moneda %}
 
-{% block title %}Crear Factura{% endblock %}
+{% block title %}
+    {% if is_update_view %}
+        Editar Factura
+    {% else %}
+        Crear Factura
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container my-4">
     <div class="card p-4">
-        <h2 class="card-title text-center mb-4">Crear Nueva Factura</h2>
+        <h2 class="card-title text-center mb-4">
+            {% if is_update_view %}
+                Editar Factura #{{ factura.pk }}
+            {% else %}
+                Crear Nueva Factura
+            {% endif %}
+        </h2>
         <form method="post" id="factura-form">
             {% csrf_token %}
             {{ form|crispy }}
@@ -14,24 +27,70 @@
             <hr class="my-4">
 
             <h3>Productos</h3>
-            <div id="productos-container">
-                <div class="row gx-2 mb-2 product-row">
-                    <div class="col-8">
-                        <select name="producto" class="form-control">
-                            <option value="">-- Seleccionar Producto --</option>
-                            {% for producto in productos %}
-                                <option value="{{ producto.pk }}" data-precio="{{ producto.precio }}">{{ producto.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-3">
-                        <input type="number" name="cantidad" placeholder="Cantidad" class="form-control">
-                    </div>
-                    <div class="col-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-danger btn-sm remove-product-btn">-</button>
+
+            {% if is_update_view %}
+                {{ formset.management_form }}
+                <div id="productos-container">
+                    {% for detalle_form in formset %}
+                        <div class="row gx-2 mb-2 product-row align-items-center">
+                            {{ detalle_form.id }}
+                            <div class="col-6">
+                                {{ detalle_form.producto|as_crispy_field }}
+                                {{ detalle_form.producto.errors }}
+                            </div>
+                            <div class="col-4">
+                                {{ detalle_form.cantidad|as_crispy_field }}
+                                {{ detalle_form.cantidad.errors }}
+                            </div>
+                            <div class="col-2 d-flex align-items-end">
+                                {% if detalle_form.instance.pk %}
+                                    <span class="form-check text-danger me-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Marcar para eliminar">
+                                        {{ detalle_form.DELETE }}
+                                    </span>
+                                {% endif %}
+                                <button type="button" class="btn btn-danger btn-sm remove-product-btn">-</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {# empty_form oculto para clonado #}
+                <div id="empty-form-template" class="d-none">
+                    <div class="row gx-2 mb-2 product-row align-items-center">
+                        {{ formset.empty_form.id }}
+                        <div class="col-6">
+                            {{ formset.empty_form.producto|as_crispy_field }}
+                        </div>
+                        <div class="col-4">
+                            {{ formset.empty_form.cantidad|as_crispy_field }}
+                        </div>
+                        <div class="col-2 d-flex align-items-end">
+                            {{ formset.empty_form.DELETE }}
+                            <button type="button" class="btn btn-danger btn-sm remove-product-btn">-</button>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+            {% else %}
+                <div id="productos-container">
+                    <div class="row gx-2 mb-2 product-row">
+                        <div class="col-8">
+                            <select name="producto" class="form-control">
+                                <option value="">-- Seleccionar Producto --</option>
+                                {% for producto in productos %}
+                                    <option value="{{ producto.pk }}" data-precio="{{ producto.precio }}">{{ producto.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <input type="number" name="cantidad" placeholder="Cantidad" class="form-control">
+                        </div>
+                        <div class="col-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger btn-sm remove-product-btn">-</button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
             
             <div class="text-center mt-3">
                 <button type="button" class="btn btn-info btn-sm" id="add-product-btn">Añadir Otro Producto</button>
@@ -40,7 +99,13 @@
             <hr class="my-4">
             
             <div class="text-center mt-3">
-                <button type="submit" class="btn btn-success me-2">Generar Factura</button>
+                <button type="submit" class="btn btn-success me-2">
+                    {% if is_update_view %}
+                        Guardar Cambios
+                    {% else %}
+                        Generar Factura
+                    {% endif %}
+                </button>
                 <a href="{% url 'factura:lista_facturas' %}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
@@ -52,23 +117,55 @@
         const addProductBtn = document.getElementById('add-product-btn');
         const productosContainer = document.getElementById('productos-container');
 
-        addProductBtn.addEventListener('click', function() {
-            const lastProductRow = productosContainer.querySelector('.product-row:last-child');
-            const newProductRow = lastProductRow.cloneNode(true);
-            newProductRow.querySelector('select').value = '';
-            newProductRow.querySelector('input').value = '';
-            productosContainer.appendChild(newProductRow);
-        });
+        {% if is_update_view %}
+            // --- Lógica para edición con formset ---
+            const totalForms = document.getElementById('id_detalle-TOTAL_FORMS');
+            const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
 
-        productosContainer.addEventListener('click', function(e) {
-            if (e.target.classList.contains('remove-product-btn')) {
-                if (productosContainer.childElementCount > 1) {
-                    e.target.closest('.product-row').remove();
-                } else {
-                    alert('Debe haber al menos un producto en la factura.');
+            addProductBtn.addEventListener('click', function() {
+                const formCount = parseInt(totalForms.value, 10);
+                let newFormHtml = emptyFormTemplate.replace(/__prefix__/g, formCount);
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = newFormHtml;
+                productosContainer.appendChild(wrapper.firstElementChild);
+                totalForms.value = formCount + 1;
+            });
+
+            productosContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-product-btn')) {
+                    const row = e.target.closest('.product-row');
+                    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                    if (deleteInput) {
+                        deleteInput.checked = true;
+                        row.style.display = 'none'; // Ocultar visualmente
+                    } else {
+                        row.remove();
+                        const formCount = parseInt(totalForms.value, 10);
+                        totalForms.value = formCount - 1;
+                    }
                 }
-            }
-        });
+            });
+
+        {% else %}
+            // --- Lógica para creación manual ---
+            addProductBtn.addEventListener('click', function() {
+                const lastProductRow = productosContainer.querySelector('.product-row:last-child');
+                const newProductRow = lastProductRow.cloneNode(true);
+                newProductRow.querySelector('select').value = '';
+                newProductRow.querySelector('input').value = '';
+                productosContainer.appendChild(newProductRow);
+            });
+
+            productosContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-product-btn')) {
+                    if (productosContainer.childElementCount > 1) {
+                        e.target.closest('.product-row').remove();
+                    } else {
+                        alert('Debe haber al menos un producto en la factura.');
+                    }
+                }
+            });
+        {% endif %}
     });
 </script>
 {% endblock %}

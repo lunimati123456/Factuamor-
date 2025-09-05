@@ -1,10 +1,11 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import MinValueValidator
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from clientes.models import Cliente
 from productos.models import Producto
+
 
 class Factura(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
@@ -24,6 +25,7 @@ class Factura(models.Model):
     
     def __str__(self):
         return f"Factura #{self.pk} - {self.cliente}"
+
 
 class DetalleFactura(models.Model):
     factura = models.ForeignKey(Factura, on_delete=models.CASCADE)
@@ -45,63 +47,79 @@ class DetalleFactura(models.Model):
     
     def clean(self):
         """Validación de stock y unicidad antes de guardar."""
-        
-        # Validación de unicidad manual para asegurar que no se repita el producto en la misma factura.
-        # Esto es necesario porque algunos backends de base de datos no aplican la restricción de inmediato.
-        if not self.pk:
-            if DetalleFactura.objects.filter(factura=self.factura, producto=self.producto).exists():
-                raise ValidationError("Este producto ya está en la factura.")
+        # Validar duplicidad (creación y edición)
+        qs = DetalleFactura.objects.filter(factura=self.factura, producto=self.producto)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError("Este producto ya está en la factura.")
 
-        # Obtener stock actual del producto (evita problemas con caché)
-        stock_actual = Producto.objects.get(pk=self.producto.pk).stock
-        
-        if not self.pk and self.cantidad > stock_actual:
+        # Validación de stock
+        producto_actual = Producto.objects.get(pk=self.producto.pk)
+
+        if self.pk:
+            detalle_antiguo = DetalleFactura.objects.get(pk=self.pk)
+
+            if detalle_antiguo.producto.pk == self.producto.pk:
+                # mismo producto → stock disponible = stock actual + cantidad antigua
+                disponible = producto_actual.stock + detalle_antiguo.cantidad
+            else:
+                # producto distinto → solo stock actual del nuevo producto
+                disponible = producto_actual.stock
+        else:
+            disponible = producto_actual.stock
+
+        if self.cantidad > disponible:
             raise ValidationError(
                 f"Stock insuficiente para {self.producto.nombre}. "
-                f"Disponible: {stock_actual}, Solicitado: {self.cantidad}"
+                f"Disponible: {disponible}, Solicitado: {self.cantidad}"
             )
-        
-        if self.pk:
-            detalle_antiguo = DetalleFactura.objects.get(pk=self.pk)
-            stock_disponible = stock_actual + detalle_antiguo.cantidad
-            if self.cantidad > stock_disponible:
-                raise ValidationError(
-                    f"Stock insuficiente para {self.producto.nombre}. "
-                    f"Disponible: {stock_disponible}, Solicitado: {self.cantidad}"
-                )
     
     def save(self, *args, **kwargs):
-        # 1. Validación previa
         self.clean()
-        
-        # 2. Proteger precio histórico
-        if not self.pk:
-            self.precio_unitario = self.producto.precio
-        
-        # 3. Calcular subtotal
-        self.subtotal = self.cantidad * self.precio_unitario
-        
-        # 4. Manejo de stock optimizado
-        if self.pk:
-            detalle_antiguo = DetalleFactura.objects.get(pk=self.pk)
-            diferencia = self.cantidad - detalle_antiguo.cantidad
-            
-            if diferencia != 0:
-                self.producto.stock -= diferencia
+
+        with transaction.atomic():
+            if not self.pk:
+                # Creación
+                self.precio_unitario = self.producto.precio
+                self.subtotal = self.cantidad * self.precio_unitario
+                self.producto.stock -= self.cantidad
                 self.producto.save()
-        else:
-            self.producto.stock -= self.cantidad
-            self.producto.save()
-        
-        # 5. Guardar detalle
-        super().save(*args, **kwargs)
-        
-        # 6. Actualizar total
-        if not kwargs.get("raw", False):
-            self.factura.actualizar_total()
+            else:
+                # Edición
+                detalle_antiguo = DetalleFactura.objects.get(pk=self.pk)
+
+                if detalle_antiguo.producto.pk != self.producto.pk:
+                    # Cambió de producto
+                    # Devolver stock al antiguo
+                    prod_antiguo = detalle_antiguo.producto
+                    prod_antiguo.stock += detalle_antiguo.cantidad
+                    prod_antiguo.save()
+
+                    # Actualizar precio unitario del nuevo producto
+                    self.precio_unitario = self.producto.precio
+
+                    # Descontar del nuevo producto
+                    self.producto.stock -= self.cantidad
+                    self.producto.save()
+                else:
+                    # Mismo producto → ajustar diferencia
+                    diferencia = self.cantidad - detalle_antiguo.cantidad
+                    if diferencia != 0:
+                        self.producto.stock -= diferencia
+                        self.producto.save()
+
+                # Recalcular subtotal
+                self.subtotal = self.cantidad * self.precio_unitario
+
+            super().save(*args, **kwargs)
+
+            if not kwargs.get("raw", False):
+                self.factura.actualizar_total()
     
     def __str__(self):
         return f"{self.cantidad} de {self.producto.nombre} en Factura #{self.factura.pk}"
+
 
 @receiver(post_delete, sender=DetalleFactura)
 def devolver_stock_al_eliminar(sender, instance, **kwargs):

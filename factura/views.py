@@ -1,22 +1,29 @@
-from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
-from django.views import View
-from django.views.generic import ListView, DetailView, DeleteView
-from django.db import transaction
-from django.core.exceptions import ValidationError
-from .forms import FacturaForm
-from .models import DetalleFactura, Producto, Factura
+# Importaciones de la biblioteca estándar
 from collections import defaultdict
+
+# Importaciones de Django (terceros)
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import View, ListView, DetailView, DeleteView
+
+# Importaciones locales
+from .forms import FacturaForm, DetalleFacturaFormSet
+from .models import Factura, DetalleFactura, Producto
+
 
 class FacturaCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = 'factura.add_factura'
+    
     def get(self, request, *args, **kwargs):
         form = FacturaForm()
         productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
         return render(request, 'factura/factura_form.html', {
             'form': form,
-            'productos': productos
+            'productos': productos,
+            'is_update_view': False
         })
 
     def post(self, request, *args, **kwargs):
@@ -26,7 +33,8 @@ class FacturaCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
             return render(request, 'factura/factura_form.html', {
                 'form': form,
-                'productos': productos
+                'productos': productos,
+                'is_update_view': False
             })
         
         try:
@@ -41,6 +49,9 @@ class FacturaCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 for producto_id, cantidad in zip(productos_seleccionados, cantidades):
                     if producto_id and cantidad:
                         productos_agrupados[int(producto_id)] += int(cantidad)
+                        
+                if not productos_agrupados:
+                    raise ValidationError("La factura debe contener al menos un producto.")
                 
                 for producto_id, cantidad in productos_agrupados.items():
                     if cantidad <= 0:
@@ -54,6 +65,8 @@ class FacturaCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         cantidad=cantidad
                     )
                 
+                factura.actualizar_total()
+                
                 return redirect(reverse_lazy('factura:lista_facturas'))
         
         except ValidationError as e:
@@ -64,7 +77,8 @@ class FacturaCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
         productos = Producto.objects.only('id', 'nombre', 'precio', 'stock')
         return render(request, 'factura/factura_form.html', {
             'form': form,
-            'productos': productos
+            'productos': productos,
+            'is_update_view': False
         })
 
 class FacturaListView(LoginRequiredMixin, ListView):
@@ -84,3 +98,68 @@ class FacturaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
     template_name = 'factura/factura_confirm_delete.html'
     success_url = reverse_lazy('factura:lista_facturas')
     permission_required = 'factura.delete_factura'
+
+class FacturaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'factura.change_factura'
+
+    def get(self, request, pk, *args, **kwargs):
+        factura = get_object_or_404(Factura, pk=pk)
+        form = FacturaForm(instance=factura)
+        formset = DetalleFacturaFormSet(instance=factura, prefix='detalle')
+        
+        return render(request, 'factura/factura_form.html', {
+            'form': form,
+            'formset': formset,
+            'is_update_view': True,
+            'factura': factura,
+        })
+
+    def post(self, request, pk, *args, **kwargs):
+        factura = get_object_or_404(Factura, pk=pk)
+        form = FacturaForm(request.POST, instance=factura)
+        formset = DetalleFacturaFormSet(request.POST, instance=factura, prefix='detalle')
+
+        if not form.is_valid() or not formset.is_valid():
+            return render(request, 'factura/factura_form.html', {
+                'form': form,
+                'formset': formset,
+                'is_update_view': True,
+                'factura': factura,
+            })
+
+        try:
+            with transaction.atomic():
+                factura = form.save(commit=False)
+
+                # Contar cuántos formularios no están marcados como eliminados
+                non_deleted = [
+                    f for f in formset
+                    if f.cleaned_data and not f.cleaned_data.get('DELETE', False)
+                ]
+                if len(non_deleted) == 0:
+                    raise ValidationError("La factura debe contener al menos un producto.")
+
+                # Guardar detalles
+                detalles = formset.save(commit=False)
+                for d in detalles:
+                    d.factura = factura
+                    d.save()
+
+                # Procesar eliminados
+                for deleted in formset.deleted_objects:
+                    deleted.delete()
+
+                factura.actualizar_total()
+                factura.save()
+
+            return redirect(reverse_lazy('factura:lista_facturas'))
+        
+        except ValidationError as e:
+            form.add_error(None, e)
+        
+        return render(request, 'factura/factura_form.html', {
+            'form': form,
+            'formset': formset,
+            'is_update_view': True,
+            'factura': factura,            
+        })
