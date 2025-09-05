@@ -56,6 +56,7 @@
                 {% if perms.factura.delete_factura %}
                 <a href="{% url 'factura:eliminar_factura' factura.pk %}" class="btn btn-danger">Eliminar Factura</a>
                 {% endif %}
+                <a href="{% url 'factura:factura_pdf' factura.pk %}" class="btn btn-primary">Descargar PDF</a>
             </div>
         </div>
     </div>

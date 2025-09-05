@@ -8,6 +8,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import View, ListView, DetailView, DeleteView
+from django_weasyprint import WeasyTemplateResponseMixin
 
 # Importaciones locales
 from .forms import FacturaForm, DetalleFacturaFormSet
@@ -163,3 +164,19 @@ class FacturaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'is_update_view': True,
             'factura': factura,            
         })
+
+# Vista para generar el PDF
+class FacturaPDFView(LoginRequiredMixin, PermissionRequiredMixin, WeasyTemplateResponseMixin, DetailView):
+    permission_required = 'factura.view_factura'
+    model = Factura
+    template_name = 'factura/factura_pdf.html'
+
+    # Nombre dinámico del archivo PDF
+    def get_pdf_filename(self):
+        factura_id = self.get_object().pk
+        return f'factura_{factura_id}.pdf'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['factura'] = self.get_object()
+        return context

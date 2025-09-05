@@ -1,0 +1,94 @@
+{% extends 'factura/base_pdf.html' %}
+{% load filtros_moneda %}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+    }
+    .invoice-container {
+        padding: 20px;
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .header h1 {
+        color: #007bff;
+        font-size: 24px;
+        margin: 0;
+    }
+    .invoice-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .invoice-info div {
+        width: 48%;
+    }
+    .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .details-table th, .details-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .details-table th {
+        background-color: #f2f2f2;
+    }
+    .total-section {
+        text-align: right;
+    }
+    .total-section h3 {
+        color: #dc3545;
+        font-size: 20px;
+    }
+</style>
+
+<div class="invoice-container">
+    <div class="header">
+        <h1>Factura de Venta</h1>
+        <p>Factura Número: {{ factura.pk }}</p>
+    </div>
+
+    <div class="invoice-info">
+        <div>
+            <strong>Cliente:</strong>
+            <p>{{ factura.cliente.nombre }} {{ factura.cliente.apellido }}</p>
+        </div>
+        <div>
+            <strong>Fecha:</strong>
+            <p>{{ factura.fecha|date:"d M Y" }}</p>
+        </div>
+    </div>
+    
+    <table class="details-table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in factura.detallefactura_set.all %}
+            <tr>
+                <td>{{ detalle.producto.nombre }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>{{ detalle.precio_unitario|moneda_cop }}</td>
+                <td>{{ detalle.subtotal|moneda_cop }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <h3>Total: {{ factura.total|moneda_cop }}</h3>
+    </div>
+</div>
+{% endblock %}
